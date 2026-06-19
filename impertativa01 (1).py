@@ -26,7 +26,7 @@ class AplicativoDesenho:
         # Inicialização dos componentes da interface
         self.criar_widgets()
         self.configurar_eventos()
-        self.criar_paleta_cores()
+       
         
         # Estado inicial da paleta
         self.definir_cor_preenchimento('black')
@@ -79,20 +79,6 @@ class AplicativoDesenho:
         self.tela.bind("<Button-1>", self.capturar_posicao)
         self.tela.bind("<B1-Motion>", self.desenhar)
         self.tela.bind("<ButtonRelease-1>", self.finalizar_desenho)
-
-    def criar_paleta_cores(self):
-        # Paleta de Cores inserida no Canvas
-        id_vermelho = self.tela.create_rectangle((10, 10, 40, 40), fill='red', tags=('paleta', 'paletavermelho'))
-        self.tela.tag_bind(id_vermelho, "<Button-1>", lambda x: self.definir_cor_preenchimento('red'))
-        
-        id_azul = self.tela.create_rectangle((10, 50, 40, 80), fill='blue', tags=('paleta', 'paletaazul'))
-        self.tela.tag_bind(id_azul, "<Button-1>", lambda x: self.definir_cor_preenchimento('blue'))
-        
-        id_preto = self.tela.create_rectangle((10, 90, 40, 120), fill='black', tags=('paleta', 'paletapreto'))
-        self.tela.tag_bind(id_preto, "<Button-1>", lambda x: self.definir_cor_preenchimento('black'))
-        
-        id_branco = self.tela.create_rectangle((10, 130, 40, 160), fill='white', outline='black', tags=('paleta', 'paletabranco'))
-        self.tela.tag_bind(id_branco, "<Button-1>", lambda x: self.definir_cor_preenchimento('white'))
 
     def capturar_posicao(self, evento):
         self.inicio_x, self.inicio_y = self.tela.canvasx(evento.x), self.tela.canvasy(evento.y)
