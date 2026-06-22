@@ -4,7 +4,7 @@ from tkinter import colorchooser
 class AplicativoDesenho:
     def __init__(self, janela):
         self.janela = janela
-        self.janela.title("Desenho Livre e Formas com Rolagem")
+        self.janela.title("Paint")
         self.janela.geometry('1000x1000')
         
         # Configuração do Grid da janela principal
