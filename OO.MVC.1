@@ -5,47 +5,49 @@ from tkinter import colorchooser
 
 class Modelo:
     def __init__(self):
-        self.forma="pincel"
-        self.cor_borda="black"
-        self.cor_preenchimento="black"
-        self.tamanho=2
-        self.inicio_x=0; self.inicio_y=0
-        self.ultimo_x=None 
-        self.ultimo_y=None
-        self.objeto=None
-        self.pontos_poligono=[]
-        self.linhas_guia=[]
+        self.forma = "pincel"
+        self.cor_borda = "black"
+        self.cor_preenchimento = "black"
+        self.tamanho = 2
+        self.inicio_x = 0
+        self.inicio_y = 0
+        self.ultimo_x = None 
+        self.ultimo_y = None
+        self.objeto = None
+        self.pontos_poligono = []
+        self.linhas_guia = []
 
 # View: --> INTERFACE
  
 class Visao:
     def __init__(self, janela):
-        self.janela=janela
+        self.janela = janela
         janela.title("Paint - MVC")
         janela.geometry("1000x1000")
         janela.grid_columnconfigure(0,weight=1)
         janela.grid_rowconfigure(0,weight=1)
-        self.barra_vertical=tk.Scrollbar(janela,orient=tk.VERTICAL)
-        self.barra_horizontal=tk.Scrollbar(janela,orient=tk.HORIZONTAL)
-        self.tela=tk.Canvas(janela,bg="white",scrollregion=(0,0,1000,1000),
-                            yscrollcommand=self.barra_vertical.set,
-                            xscrollcommand=self.barra_horizontal.set)
-        self.barra_vertical.config(command=self.tela.yview)
-        self.barra_horizontal.config(command=self.tela.xview)
-        self.tela.grid(row=0,column=0,sticky="nsew")
-        self.barra_vertical.grid(row=0,column=1,sticky="ns")
-        self.barra_horizontal.grid(row=1,column=0,sticky="ew")
-        self.quadro=tk.Frame(janela); self.quadro.grid(row=2,column=0,sticky="ew")
+        self.barra_vertical = tk.Scrollbar(janela,orient=tk.VERTICAL)
+        self.barra_horizontal = tk.Scrollbar(janela,orient=tk.HORIZONTAL)
+        self.tela = tk.Canvas(janela,bg = "white",scrollregion = (0,0,1000,1000),
+                            yscrollcommand = self.barra_vertical.set,
+                            xscrollcommand = self.barra_horizontal.set)
+        self.barra_vertical.config(command = self.tela.yview)
+        self.barra_horizontal.config(command = self.tela.xview)
+        self.tela.grid(row=0,column = 0, sticky = "nsew")
+        self.barra_vertical.grid(row = 0, column = 1, sticky = "ns")
+        self.barra_horizontal.grid(row = 1, column = 0, sticky = "ew")
+        self.quadro = tk.Frame(janela)
+        self.quadro.grid(row = 2,column = 0,sticky = "ew")
 
         def b(txt):
-            bt=tk.Button(self.quadro,text=txt); bt.pack(side=tk.LEFT); return bt
-        self.botao_pincel=b("Pincel"); self.botao_linha=b("Linha")
-        self.botao_retangulo=b("Retângulo"); self.botao_oval=b("Oval")
-        self.botao_circulo=b("Círculo"); self.botao_poligono=b("Polígono")
-        tk.Label(self.quadro,text="Tamanho").pack(side=tk.LEFT)
-        self.escala_tamanho=tk.Scale(self.quadro,from_=1,to=20,orient=tk.HORIZONTAL)
-        self.escala_tamanho.set(2); self.escala_tamanho.pack(side=tk.LEFT)
-        self.botao_cor_borda=b("Cor Borda"); self.botao_cor_preenchimento=b("Cor Preenchimento")
+            bt = tk.Button(self.quadro,text=txt); bt.pack(side=tk.LEFT); return bt
+        self.botao_pincel = b("Pincel"); self.botao_linha = b("Linha")
+        self.botao_retangulo = b("Retângulo"); self.botao_oval = b("Oval")
+        self.botao_circulo=b("Círculo"); self.botao_poligono = b("Polígono")
+        tk.Label(self.quadro,text="Tamanho").pack(side = tk.LEFT)
+        self.escala_tamanho = tk.Scale(self.quadro,from_ = 1,to = 20,orient = tk.HORIZONTAL)
+        self.escala_tamanho.set(2); self.escala_tamanho.pack(side = tk.LEFT)
+        self.botao_cor_borda = b("Cor Borda"); self.botao_cor_preenchimento = b("Cor Preenchimento")
 
 # Controllers: --> LÓGICA COMPLETA DO CÓDIGO
 
@@ -102,7 +104,67 @@ class Controlador:
             self.modelo.ultimo_x=x 
             self.modelo.ultimo_y=y
         else:
-            if self.modelo.objeto:
+            if self.modelo.objeto:import tkinter as tk
+from tkinter import colorchooser
+
+# Model: --> APENAS OS DADOS DA APLICAÇÃO
+
+class Modelo:
+    def __init__(self):
+        self.forma="pincel"
+        self.cor_borda="black"
+        self.cor_preenchimento="black"
+        self.tamanho=2
+        self.inicio_x=0; self.inicio_y=0
+        self.ultimo_x=None 
+        self.ultimo_y=None
+        self.objeto=None
+        self.pontos_poligono=[]
+        self.linhas_guia=[]
+
+# View: --> INTERFACE
+ 
+class Visao:
+    def __init__(self, janela):
+        self.janela=janela
+        janela.title("Paint - MVC")
+        janela.geometry("1000x1000")
+        janela.grid_columnconfigure(0,weight=1)
+        janela.grid_rowconfigure(0,weight=1)
+        self.barra_vertical=tk.Scrollbar(janela,orient=tk.VERTICAL)
+        self.barra_horizontal=tk.Scrollbar(janela,orient=tk.HORIZONTAL)
+        self.tela=tk.Canvas(janela,bg="white",scrollregion=(0,0,1000,1000),
+                            yscrollcommand=self.barra_vertical.set,
+                            xscrollcommand=self.barra_horizontal.set)
+        self.barra_vertical.config(command=self.tela.yview)
+        self.barra_horizontal.config(command=self.tela.xview)
+        self.tela.grid(row=0,column=0,sticky="nsew")
+        self.barra_vertical.grid(row=0,column=1,sticky="ns")
+        self.barra_horizontal.grid(row=1,column=0,sticky="ew")
+        self.quadro=tk.Frame(janela); self.quadro.grid(row=2,column=0,sticky="ew")
+
+        def b(txt):
+            bt=tk.Button(self.quadro,text=txt); bt.pack(side=tk.LEFT); return bt
+        self.botao_pincel=b("Pincel"); self.botao_linha=b("Linha")
+        self.botao_retangulo=b("Retângulo"); self.botao_oval=b("Oval")
+        self.botao_circulo=b("Círculo"); self.botao_poligono=b("Polígono")
+        tk.Label(self.quadro,text="Tamanho").pack(side=tk.LEFT)
+        self.escala_tamanho=tk.Scale(self.quadro,from_=1,to=20,orient=tk.HORIZONTAL)
+        self.escala_tamanho.set(2); self.escala_tamanho.pack(side=tk.LEFT)
+        self.botao_cor_borda=b("Cor Borda"); self.botao_cor_preenchimento=b("Cor Preenchimento")
+
+# Controllers: --> LÓGICA COMPLETA DO CÓDIGO
+
+class Controlador:
+    def __init__(self,modelo,visao):
+        self.modelo=modelo 
+        self.visao=visao
+        v=visao
+        v.botao_pincel.config(command=lambda:self.forma("pincel"))
+        v.botao_linha.config(command=lambda:self.forma("linha"))
+        v.botao_retangulo.config(command=lambda:self.forma("retangulo"))
+        v.botao_oval.config(command=lambda:self.forma("oval"))
+
                 self.visao.tela.coords(self.modelo.objeto,self.modelo.inicio_x,self.modelo.inicio_y,x,y)
             else:
                 if self.modelo.forma=="linha":
