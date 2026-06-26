@@ -1,1 +1,114 @@
+import tkinter as tk
+from tkinter import colorchooser
 
+# Modelo:
+
+class Modelo:
+    def __init__(self):
+        self.forma="pincel"
+        self.cor_borda="black"
+        self.cor_preenchimento="black"
+        self.tamanho=2
+        self.inicio_x=0; self.inicio_y=0
+        self.ultimo_x=None; self.ultimo_y=None
+        self.objeto=None
+        self.pontos_poligono=[]
+        self.linhas_guia=[]
+
+# Visão:
+
+class Visao:
+    def __init__(self, janela):
+        self.janela=janela
+        janela.title("Paint - MVC")
+        janela.geometry("1000x1000")
+        janela.grid_columnconfigure(0,weight=1)
+        janela.grid_rowconfigure(0,weight=1)
+        self.barra_vertical=tk.Scrollbar(janela,orient=tk.VERTICAL)
+        self.barra_horizontal=tk.Scrollbar(janela,orient=tk.HORIZONTAL)
+        self.tela=tk.Canvas(janela,bg="white",scrollregion=(0,0,1000,1000),
+                            yscrollcommand=self.barra_vertical.set,
+                            xscrollcommand=self.barra_horizontal.set)
+        self.barra_vertical.config(command=self.tela.yview)
+        self.barra_horizontal.config(command=self.tela.xview)
+        self.tela.grid(row=0,column=0,sticky="nsew")
+        self.barra_vertical.grid(row=0,column=1,sticky="ns")
+        self.barra_horizontal.grid(row=1,column=0,sticky="ew")
+        self.quadro=tk.Frame(janela); self.quadro.grid(row=2,column=0,sticky="ew")
+        def b(txt):
+            bt=tk.Button(self.quadro,text=txt); bt.pack(side=tk.LEFT); return bt
+        self.botao_pincel=b("Pincel"); self.botao_linha=b("Linha")
+        self.botao_retangulo=b("Retângulo"); self.botao_oval=b("Oval")
+        self.botao_circulo=b("Círculo"); self.botao_poligono=b("Polígono")
+        tk.Label(self.quadro,text="Tamanho").pack(side=tk.LEFT)
+        self.escala_tamanho=tk.Scale(self.quadro,from_=1,to=20,orient=tk.HORIZONTAL)
+        self.escala_tamanho.set(2); self.escala_tamanho.pack(side=tk.LEFT)
+        self.botao_cor_borda=b("Cor Borda"); self.botao_cor_preenchimento=b("Cor Preenchimento")
+
+# Controle:
+
+class Controlador:
+    def __init__(self,modelo,visao):
+        self.modelo=modelo; self.visao=visao
+        v=visao
+        v.botao_pincel.config(command=lambda:self.forma("pincel"))
+        v.botao_linha.config(command=lambda:self.forma("linha"))
+        v.botao_retangulo.config(command=lambda:self.forma("retangulo"))
+        v.botao_oval.config(command=lambda:self.forma("oval"))
+        v.botao_circulo.config(command=lambda:self.forma("circulo"))
+        v.botao_poligono.config(command=lambda:self.forma("poligono"))
+        v.botao_cor_borda.config(command=self.cor_borda)
+        v.botao_cor_preenchimento.config(command=self.cor_preenchimento)
+        v.escala_tamanho.config(command=lambda x:setattr(self.modelo,"tamanho",int(x)))
+        v.tela.bind("<Button-1>",self.clicar)
+        v.tela.bind("<B1-Motion>",self.arrastar)
+        v.tela.bind("<ButtonRelease-1>",lambda e:setattr(self.modelo,"objeto",None))
+        v.tela.bind("<Double-Button-1>",self.fechar)
+    def forma(self,f):
+        self.modelo.forma=f
+    def cor_borda(self):
+        c=colorchooser.askcolor()[1]
+        if c:self.modelo.cor_borda=c
+    def cor_preenchimento(self):
+        c=colorchooser.askcolor()[1]
+        if c:self.modelo.cor_preenchimento=c
+    def clicar(self,e):
+        x=self.visao.tela.canvasx(e.x); y=self.visao.tela.canvasy(e.y)
+        if self.modelo.forma=="poligono":
+            self.modelo.pontos_poligono.extend([x,y])
+            if len(self.modelo.pontos_poligono)>=4:
+                x1,y1=self.modelo.pontos_poligono[-4],self.modelo.pontos_poligono[-3]
+                l=self.visao.tela.create_line(x1,y1,x,y,fill=self.modelo.cor_borda,width=self.modelo.tamanho)
+                self.modelo.linhas_guia.append(l)
+            return
+        self.modelo.inicio_x=x; self.modelo.inicio_y=y
+        self.modelo.ultimo_x=x; self.modelo.ultimo_y=y
+    def arrastar(self,e):
+        if self.modelo.forma=="poligono": return
+        x=self.visao.tela.canvasx(e.x); y=self.visao.tela.canvasy(e.y)
+        if self.modelo.forma=="pincel":
+            self.visao.tela.create_line(self.modelo.ultimo_x,self.modelo.ultimo_y,x,y,fill=self.modelo.cor_borda,width=self.modelo.tamanho,smooth=True)
+            self.modelo.ultimo_x=x; self.modelo.ultimo_y=y
+        else:
+            if self.modelo.objeto:
+                self.visao.tela.coords(self.modelo.objeto,self.modelo.inicio_x,self.modelo.inicio_y,x,y)
+            else:
+                if self.modelo.forma=="linha":
+                    self.modelo.objeto=self.visao.tela.create_line(self.modelo.inicio_x,self.modelo.inicio_y,x,y,fill=self.modelo.cor_borda,width=self.modelo.tamanho)
+                elif self.modelo.forma=="retangulo":
+                    self.modelo.objeto=self.visao.tela.create_rectangle(self.modelo.inicio_x,self.modelo.inicio_y,x,y,outline=self.modelo.cor_borda,fill=self.modelo.cor_preenchimento)
+                else:
+                    self.modelo.objeto=self.visao.tela.create_oval(self.modelo.inicio_x,self.modelo.inicio_y,x,y,outline=self.modelo.cor_borda,fill=self.modelo.cor_preenchimento)
+    def fechar(self,e):
+        if self.modelo.forma=="poligono" and len(self.modelo.pontos_poligono)>=6:
+            for l in self.modelo.linhas_guia: self.visao.tela.delete(l)
+            self.modelo.linhas_guia.clear()
+            self.visao.tela.create_polygon(self.modelo.pontos_poligono,outline=self.modelo.cor_borda,fill=self.modelo.cor_preenchimento,width=self.modelo.tamanho)
+            self.modelo.pontos_poligono.clear()
+
+if __name__=="__main__":
+    janela=tk.Tk()
+    modelo=Modelo()
+    visao=Visao(janela)
+    Controlador(modelo,visao)
+    janela.mainloop()
