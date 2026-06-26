@@ -10,7 +10,8 @@ class Modelo:
         self.cor_preenchimento="black"
         self.tamanho=2
         self.inicio_x=0; self.inicio_y=0
-        self.ultimo_x=None; self.ultimo_y=None
+        self.ultimo_x=None 
+        self.ultimo_y=None
         self.objeto=None
         self.pontos_poligono=[]
         self.linhas_guia=[]
@@ -35,6 +36,7 @@ class Visao:
         self.barra_vertical.grid(row=0,column=1,sticky="ns")
         self.barra_horizontal.grid(row=1,column=0,sticky="ew")
         self.quadro=tk.Frame(janela); self.quadro.grid(row=2,column=0,sticky="ew")
+
         def b(txt):
             bt=tk.Button(self.quadro,text=txt); bt.pack(side=tk.LEFT); return bt
         self.botao_pincel=b("Pincel"); self.botao_linha=b("Linha")
@@ -49,7 +51,8 @@ class Visao:
 
 class Controlador:
     def __init__(self,modelo,visao):
-        self.modelo=modelo; self.visao=visao
+        self.modelo=modelo 
+        self.visao=visao
         v=visao
         v.botao_pincel.config(command=lambda:self.forma("pincel"))
         v.botao_linha.config(command=lambda:self.forma("linha"))
@@ -64,14 +67,18 @@ class Controlador:
         v.tela.bind("<B1-Motion>",self.arrastar)
         v.tela.bind("<ButtonRelease-1>",lambda e:setattr(self.modelo,"objeto",None))
         v.tela.bind("<Double-Button-1>",self.fechar)
+
     def forma(self,f):
         self.modelo.forma=f
+
     def cor_borda(self):
         c=colorchooser.askcolor()[1]
         if c:self.modelo.cor_borda=c
+
     def cor_preenchimento(self):
         c=colorchooser.askcolor()[1]
         if c:self.modelo.cor_preenchimento=c
+
     def clicar(self,e):
         x=self.visao.tela.canvasx(e.x); y=self.visao.tela.canvasy(e.y)
         if self.modelo.forma=="poligono":
@@ -81,14 +88,19 @@ class Controlador:
                 l=self.visao.tela.create_line(x1,y1,x,y,fill=self.modelo.cor_borda,width=self.modelo.tamanho)
                 self.modelo.linhas_guia.append(l)
             return
-        self.modelo.inicio_x=x; self.modelo.inicio_y=y
-        self.modelo.ultimo_x=x; self.modelo.ultimo_y=y
+        self.modelo.inicio_x=x
+        self.modelo.inicio_y=y
+        self.modelo.ultimo_x=x 
+        self.modelo.ultimo_y=y
+
     def arrastar(self,e):
         if self.modelo.forma=="poligono": return
-        x=self.visao.tela.canvasx(e.x); y=self.visao.tela.canvasy(e.y)
+        x=self.visao.tela.canvasx(e.x)
+        y=self.visao.tela.canvasy(e.y)
         if self.modelo.forma=="pincel":
             self.visao.tela.create_line(self.modelo.ultimo_x,self.modelo.ultimo_y,x,y,fill=self.modelo.cor_borda,width=self.modelo.tamanho,smooth=True)
-            self.modelo.ultimo_x=x; self.modelo.ultimo_y=y
+            self.modelo.ultimo_x=x 
+            self.modelo.ultimo_y=y
         else:
             if self.modelo.objeto:
                 self.visao.tela.coords(self.modelo.objeto,self.modelo.inicio_x,self.modelo.inicio_y,x,y)
@@ -99,6 +111,7 @@ class Controlador:
                     self.modelo.objeto=self.visao.tela.create_rectangle(self.modelo.inicio_x,self.modelo.inicio_y,x,y,outline=self.modelo.cor_borda,fill=self.modelo.cor_preenchimento)
                 else:
                     self.modelo.objeto=self.visao.tela.create_oval(self.modelo.inicio_x,self.modelo.inicio_y,x,y,outline=self.modelo.cor_borda,fill=self.modelo.cor_preenchimento)
+    
     def fechar(self,e):
         if self.modelo.forma=="poligono" and len(self.modelo.pontos_poligono)>=6:
             for l in self.modelo.linhas_guia: self.visao.tela.delete(l)
