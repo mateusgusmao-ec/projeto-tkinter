@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import colorchooser
 
-# Modelo:
+# Model:
 
 class Modelo:
     def __init__(self):
@@ -15,7 +15,7 @@ class Modelo:
         self.pontos_poligono=[]
         self.linhas_guia=[]
 
-# Visão:
+# View:
 
 class Visao:
     def __init__(self, janela):
@@ -45,7 +45,7 @@ class Visao:
         self.escala_tamanho.set(2); self.escala_tamanho.pack(side=tk.LEFT)
         self.botao_cor_borda=b("Cor Borda"); self.botao_cor_preenchimento=b("Cor Preenchimento")
 
-# Controle:
+# Controllers:
 
 class Controlador:
     def __init__(self,modelo,visao):
