@@ -41,51 +41,51 @@ class Visao:
         self.barra_vertical.grid(row=0,column=1,sticky="ns")
         self.barra_horizontal.grid(row=1,column=0,sticky="ew")
 
-        self.quadro=tk.Frame(janela)
+        self.quadro=tk.Frame(janela)  # cria um quadro para os botões e controles 
         self.quadro.grid(row=2,column=0,sticky="ew")
 
-        def b(txt):
-            bt=tk.Button(self.quadro,text=txt)
-            bt.pack(side=tk.LEFT)
-            return bt
+        def botao(txt):  # cria um botão com o texto txt e o adiciona ao quadro
+            botao=tk.Button(self.quadro,text=txt)
+            botao.pack(side=tk.LEFT)
+            return botao
 
-        self.botao_pincel=b("Pincel")
-        self.botao_linha=b("Linha")
-        self.botao_retangulo=b("Retângulo")
-        self.botao_oval=b("Oval")
-        self.botao_circulo=b("Círculo")
-        self.botao_poligono=b("Polígono")
+        # cria respectivos botões para cada forma geométrica (usando a função 'b'):
+        self.botao_pincel=botao("Pincel")
+        self.botao_linha=botao("Linha")
+        self.botao_retangulo=botao("Retângulo")
+        self.botao_oval=botao("Oval")
+        self.botao_circulo=botao("Círculo")
+        self.botao_poligono=botao("Polígono")
 
         tk.Label(self.quadro,text="Tamanho").pack(side=tk.LEFT)
-        self.escala_tamanho=tk.Scale(self.quadro,from_=1,to=20,orient=tk.HORIZONTAL)
+        self.escala_tamanho=tk.Scale(self.quadro,from_=1,to=20,orient=tk.HORIZONTAL)  # cria uma escala para o tamanho do pincel
         self.escala_tamanho.set(2)
         self.escala_tamanho.pack(side=tk.LEFT)
 
-        self.botao_cor_borda=b("Cor Borda")
-        self.botao_cor_preenchimento=b("Cor Preenchimento")
+        self.botao_cor_borda=botao("Cor Borda")
+        self.botao_cor_preenchimento=botao("Cor Preenchimento")
 
 class Controlador:
-    def __init__(self,modelo,visao):
+    def __init__(self,modelo,visao):  # liga o modelo à visão e define os eventos de interação do usuário
         self.modelo=modelo
         self.visao=visao
-        v=visao
 
-        v.botao_pincel.config(command=lambda:self.forma("pincel"))
-        v.botao_linha.config(command=lambda:self.forma("linha"))
-        v.botao_retangulo.config(command=lambda:self.forma("retangulo"))
-        v.botao_oval.config(command=lambda:self.forma("oval"))
-        v.botao_circulo.config(command=lambda:self.forma("circulo"))
-        v.botao_poligono.config(command=lambda:self.forma("poligono"))
+        visao.botao_pincel.config(command=lambda:self.forma("pincel"))
+        visao.botao_linha.config(command=lambda:self.forma("linha"))
+        visao.botao_retangulo.config(command=lambda:self.forma("retangulo"))
+        visao.botao_oval.config(command=lambda:self.forma("oval"))
+        visao.botao_circulo.config(command=lambda:self.forma("circulo"))
+        visao.botao_poligono.config(command=lambda:self.forma("poligono"))
 
-        v.botao_cor_borda.config(command=self.cor_borda)
-        v.botao_cor_preenchimento.config(command=self.cor_preenchimento)
+        visao.botao_cor_borda.config(command=self.cor_borda)
+        visao.botao_cor_preenchimento.config(command=self.cor_preenchimento)
 
-        v.escala_tamanho.config(command=lambda x:setattr(self.modelo,"tamanho",int(x)))
+        visao.escala_tamanho.config(command=lambda x:setattr(self.modelo,"tamanho",int(x)))
 
-        v.tela.bind("<Button-1>",self.clicar)
-        v.tela.bind("<B1-Motion>",self.arrastar)
-        v.tela.bind("<ButtonRelease-1>",lambda e:setattr(self.modelo,"objeto",None))
-        v.tela.bind("<Double-Button-1>",self.fechar)
+        visao.tela.bind("<Button-1>",self.clicar)
+        visao.tela.bind("<B1-Motion>",self.arrastar)
+        visao.tela.bind("<ButtonRelease-1>",lambda e:setattr(self.modelo,"objeto",None))
+        visao.tela.bind("<Double-Button-1>",self.fechar)
 
     def forma(self,f):
         self.modelo.forma=f
@@ -116,7 +116,8 @@ class Controlador:
         self.modelo.ultimo_y=y
 
     def arrastar(self,e):
-        if self.modelo.forma=="poligono": return
+        if self.modelo.forma=="poligono": 
+            return
         x=self.visao.tela.canvasx(e.x)
         y=self.visao.tela.canvasy(e.y)
 
