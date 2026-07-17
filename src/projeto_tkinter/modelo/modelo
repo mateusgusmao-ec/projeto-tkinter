@@ -1,20 +1,13 @@
 class Modelo:
     def __init__(self):
-        self.cor_borda = "black"
-        self.cor_preenchimento = "black"
-        self.tamanho = 2
-        self.inicio_x = 0
-        self.inicio_y = 0
-        self.ultimo_x = None
-        self.ultimo_y = None
-        self.objeto = None
-        self.pontos_poligono = []
-        self.linhas_guia = []
-
-        # ---- seleção múltipla ----
-        self.figuras_selecionadas = set()   # conjunto com os ids das figuras selecionadas
-        self.buffer_copia = None            # lista de figuras copiadas (Ctrl+C / Ctrl+V)
-        self.retangulo_selecao = None       # id do retângulo de seleção "com laço"
-        self.modo_arraste = None            # "mover" ou "retangulo", usado pelo EstadoSelecao
-        self.grupo_contador = 0             # contador para gerar tags de figuras compostas
-
+        self.forma="pincel"
+        self.cor_borda="black"
+        self.cor_preenchimento="black"
+        self.tamanho=2
+        self.inicio_x=0
+        self.inicio_y=0
+        self.ultimo_x=None
+        self.ultimo_y=None
+        self.objeto=None
+        self.pontos_poligono=[]
+        self.linhas_guia=[]
