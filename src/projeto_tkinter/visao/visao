@@ -1,0 +1,372 @@
+class Visao:
+    def __init__(self, janela):
+        self.janela = janela
+        janela.title("Paint - MVC com State Pattern")
+        janela.geometry("1000x1000")
+        janela.grid_columnconfigure(0, weight=1)
+        janela.grid_rowconfigure(0, weight=1)
+
+        self.barra_vertical = tk.Scrollbar(janela, orient=tk.VERTICAL)
+        self.barra_horizontal = tk.Scrollbar(janela, orient=tk.HORIZONTAL)
+
+        self.tela = tk.Canvas(janela, bg="white", scrollregion=(0, 0, 2000, 2000),
+                            yscrollcommand=self.barra_vertical.set,
+                            xscrollcommand=self.barra_horizontal.set)
+
+        self.barra_vertical.config(command=self.tela.yview)
+        self.barra_horizontal.config(command=self.tela.xview)
+
+        self.tela.grid(row=0, column=0, sticky="nsew")
+        self.barra_vertical.grid(row=0, column=1, sticky="ns")
+        self.barra_horizontal.grid(row=1, column=0, sticky="ew")
+
+        self.quadro = tk.Frame(janela)
+        self.quadro.grid(row=2, column=0, sticky="ew")
+
+        self.quadro2 = tk.Frame(janela)
+        self.quadro2.grid(row=3, column=0, sticky="ew")
+
+        def botao(txt, quadro=None):
+            b = tk.Button(quadro if quadro is not None else self.quadro, text=txt)
+            b.pack(side=tk.LEFT, padx=2)
+            return b
+
+        self.botao_selecionar = botao("Selecionar")
+        self.botao_pincel = botao("Pincel")
+        self.botao_linha = botao("Linha")
+        self.botao_retangulo = botao("Retângulo")
+        self.botao_oval = botao("Oval")
+        self.botao_circulo = botao("Círculo")
+        self.botao_poligono = botao("Polígono")
+        self.botao_poligono_regular = botao("Polígono Regular")
+        self.botao_distancia = botao("Distância dos pontos")
+
+        tk.Label(self.quadro, text="Tamanho").pack(side=tk.LEFT, padx=5)
+        self.escala_tamanho = tk.Scale(self.quadro, from_=1, to=20, orient=tk.HORIZONTAL)
+        self.escala_tamanho.set(2)
+        self.escala_tamanho.pack(side=tk.LEFT)
+
+        tk.Label(self.quadro, text="Lados").pack(side=tk.LEFT, padx=5)
+        self.spin_lados = tk.Spinbox(self.quadro, from_=3, to=12, width=3)
+        self.spin_lados.delete(0, "end")
+        self.spin_lados.insert(0, "5")
+        self.spin_lados.pack(side=tk.LEFT)
+
+        self.botao_cor_borda = botao("Cor Borda")
+        self.botao_cor_preenchimento = botao("Cor Preenchimento")
+
+        # ---- segunda linha: operações de seleção múltipla / figuras compostas ----
+        self.botao_agrupar = botao("Agrupar (figura composta)", self.quadro2)
+        self.botao_desagrupar = botao("Desagrupar", self.quadro2)
+        self.botao_selecionar_tudo = botao("Selecionar Tudo", self.quadro2)
+
+
+class EstadoFerramenta(ABC):
+    @abstractmethod
+    def clicar(self, ctrl, x, y, ctrl_pressionado=False):
+        pass
+
+    @abstractmethod
+    def arrastar(self, ctrl, x, y, ctrl_pressionado=False):
+        pass
+
+    def soltar(self, ctrl, e):
+        ctrl.modelo.objeto = None
+
+    def fechar(self, ctrl, x, y):
+        pass
+
+
+class EstadoSelecao(EstadoFerramenta):
+    """
+    Suporta seleção múltipla de duas formas:
+      1) clique simples seleciona uma figura; CTRL+clique adiciona/retira
+         outras figuras do conjunto selecionado;
+      2) clique e arraste em área vazia desenha um retângulo (fundo
+         transparente) e, ao soltar o botão, seleciona todas as figuras
+         que ficarem totalmente dentro dele.
+    Também move/opera sobre todo o conjunto selecionado de uma vez.
+    """
+
+    def clicar(self, ctrl, x, y, ctrl_pressionado=False):
+        alvo = self._figura_no_ponto(ctrl, x, y)
+
+        if alvo is not None:
+            if ctrl_pressionado:
+                # alterna a figura (ou o grupo dela) dentro/fora da seleção
+                if alvo in ctrl.modelo.figuras_selecionadas:
+                    ctrl.desselecionar_figura(alvo)
+                else:
+                    ctrl.selecionar_figura(alvo)
+            else:
+                # clique simples: se a figura já não fizer parte da seleção
+                # atual, troca a seleção inteira por ela (ou pelo seu grupo)
+                if alvo not in ctrl.modelo.figuras_selecionadas:
+                    ctrl.limpar_selecao()
+                    ctrl.selecionar_figura(alvo)
+                # se já estava selecionada, mantém o conjunto (permite
+                # arrastar várias figuras juntas)
+
+            ctrl.modelo.ultimo_x = x
+            ctrl.modelo.ultimo_y = y
+            ctrl.modelo.modo_arraste = "mover"
+        else:
+            # clicou em área vazia -> inicia seleção por retângulo (laço)
+            if not ctrl_pressionado:
+                ctrl.limpar_selecao()
+            ctrl.modelo.inicio_x = x
+            ctrl.modelo.inicio_y = y
+            ctrl.modelo.modo_arraste = "retangulo"
+
+    def arrastar(self, ctrl, x, y, ctrl_pressionado=False):
+        if ctrl.modelo.modo_arraste == "mover" and ctrl.modelo.figuras_selecionadas:
+            dx = x - ctrl.modelo.ultimo_x
+            dy = y - ctrl.modelo.ultimo_y
+            for fig in ctrl.modelo.figuras_selecionadas:
+                ctrl.visao.tela.move(fig, dx, dy)
+            ctrl.modelo.ultimo_x = x
+            ctrl.modelo.ultimo_y = y
+
+        elif ctrl.modelo.modo_arraste == "retangulo":
+            if ctrl.modelo.retangulo_selecao:
+                ctrl.visao.tela.coords(
+                    ctrl.modelo.retangulo_selecao,
+                    ctrl.modelo.inicio_x, ctrl.modelo.inicio_y, x, y
+                )
+            else:
+                # fundo transparente: sem "fill", apenas contorno tracejado
+                ctrl.modelo.retangulo_selecao = ctrl.visao.tela.create_rectangle(
+                    ctrl.modelo.inicio_x, ctrl.modelo.inicio_y, x, y,
+                    outline="blue", dash=(4, 2), fill=""
+                )
+
+    def soltar(self, ctrl, e):
+        if ctrl.modelo.modo_arraste == "retangulo" and ctrl.modelo.retangulo_selecao:
+            x1, y1, x2, y2 = ctrl.visao.tela.coords(ctrl.modelo.retangulo_selecao)
+            xmin, xmax = sorted((x1, x2))
+            ymin, ymax = sorted((y1, y2))
+
+            # find_enclosed -> apenas as figuras TOTALMENTE dentro do retângulo
+            itens = ctrl.visao.tela.find_enclosed(xmin, ymin, xmax, ymax)
+            for item in itens:
+                if item != ctrl.modelo.retangulo_selecao:
+                    ctrl.selecionar_figura(item)
+
+            ctrl.visao.tela.delete(ctrl.modelo.retangulo_selecao)
+            ctrl.modelo.retangulo_selecao = None
+
+        ctrl.modelo.modo_arraste = None
+        ctrl.modelo.ultimo_x = None
+        ctrl.modelo.ultimo_y = None
+
+    @staticmethod
+    def _figura_no_ponto(ctrl, x, y):
+        """Retorna a figura mais próxima do ponto, só se o ponto estiver
+        realmente sobre (ou bem perto d)ela — evita selecionar qualquer
+        coisa ao clicar em área totalmente vazia."""
+        candidatos = ctrl.visao.tela.find_closest(x, y)
+        if not candidatos:
+            return None
+        item = candidatos[0]
+        if item == ctrl.modelo.retangulo_selecao:
+            return None
+        bbox = ctrl.visao.tela.bbox(item)
+        if not bbox:
+            return None
+        margem = 4
+        if (bbox[0] - margem <= x <= bbox[2] + margem and
+                bbox[1] - margem <= y <= bbox[3] + margem):
+            return item
+        return None
+
+
+class EstadoPincel(EstadoFerramenta):
+    def clicar(self, ctrl, x, y, ctrl_pressionado=False):
+        ctrl.modelo.ultimo_x = x
+        ctrl.modelo.ultimo_y = y
+
+    def arrastar(self, ctrl, x, y, ctrl_pressionado=False):
+        ctrl.visao.tela.create_line(
+            ctrl.modelo.ultimo_x, ctrl.modelo.ultimo_y, x, y,
+            fill=ctrl.modelo.cor_borda,
+            width=ctrl.modelo.tamanho,
+            smooth=True
+        )
+        ctrl.modelo.ultimo_x = x
+        ctrl.modelo.ultimo_y = y
+
+
+class EstadoLinha(EstadoFerramenta):
+    def clicar(self, ctrl, x, y, ctrl_pressionado=False):
+        ctrl.modelo.inicio_x = x
+        ctrl.modelo.inicio_y = y
+
+    def arrastar(self, ctrl, x, y, ctrl_pressionado=False):
+        if ctrl.modelo.objeto:
+            ctrl.visao.tela.coords(ctrl.modelo.objeto, ctrl.modelo.inicio_x, ctrl.modelo.inicio_y, x, y)
+        else:
+            ctrl.modelo.objeto = ctrl.visao.tela.create_line(
+                ctrl.modelo.inicio_x, ctrl.modelo.inicio_y, x, y,
+                fill=ctrl.modelo.cor_borda,
+                width=ctrl.modelo.tamanho
+            )
+
+
+class EstadoRetangulo(EstadoFerramenta):
+    def clicar(self, ctrl, x, y, ctrl_pressionado=False):
+        ctrl.modelo.inicio_x = x
+        ctrl.modelo.inicio_y = y
+
+    def arrastar(self, ctrl, x, y, ctrl_pressionado=False):
+        if ctrl.modelo.objeto:
+            ctrl.visao.tela.coords(ctrl.modelo.objeto, ctrl.modelo.inicio_x, ctrl.modelo.inicio_y, x, y)
+        else:
+            ctrl.modelo.objeto = ctrl.visao.tela.create_rectangle(
+                ctrl.modelo.inicio_x, ctrl.modelo.inicio_y, x, y,
+                outline=ctrl.modelo.cor_borda,
+                fill=ctrl.modelo.cor_preenchimento,
+                width=ctrl.modelo.tamanho
+            )
+
+
+class EstadoOval(EstadoFerramenta):
+    def clicar(self, ctrl, x, y, ctrl_pressionado=False):
+        ctrl.modelo.inicio_x = x
+        ctrl.modelo.inicio_y = y
+
+    def arrastar(self, ctrl, x, y, ctrl_pressionado=False):
+        if ctrl.modelo.objeto:
+            ctrl.visao.tela.coords(ctrl.modelo.objeto, ctrl.modelo.inicio_x, ctrl.modelo.inicio_y, x, y)
+        else:
+            ctrl.modelo.objeto = ctrl.visao.tela.create_oval(
+                ctrl.modelo.inicio_x, ctrl.modelo.inicio_y, x, y,
+                outline=ctrl.modelo.cor_borda,
+                fill=ctrl.modelo.cor_preenchimento,
+                width=ctrl.modelo.tamanho
+            )
+
+
+class EstadoCirculo(EstadoFerramenta):
+    def clicar(self, ctrl, x, y, ctrl_pressionado=False):
+        ctrl.modelo.inicio_x = x
+        ctrl.modelo.inicio_y = y
+
+    def arrastar(self, ctrl, x, y, ctrl_pressionado=False):
+        lado = min(abs(x - ctrl.modelo.inicio_x), abs(y - ctrl.modelo.inicio_y))
+        x_fim = ctrl.modelo.inicio_x + lado if x >= ctrl.modelo.inicio_x else ctrl.modelo.inicio_x - lado
+        y_fim = ctrl.modelo.inicio_y + lado if y >= ctrl.modelo.inicio_y else ctrl.modelo.inicio_y - lado
+
+        if ctrl.modelo.objeto:
+            ctrl.visao.tela.coords(ctrl.modelo.objeto, ctrl.modelo.inicio_x, ctrl.modelo.inicio_y, x_fim, y_fim)
+        else:
+            ctrl.modelo.objeto = ctrl.visao.tela.create_oval(
+                ctrl.modelo.inicio_x, ctrl.modelo.inicio_y, x_fim, y_fim,
+                outline=ctrl.modelo.cor_borda,
+                fill=ctrl.modelo.cor_preenchimento,
+                width=ctrl.modelo.tamanho
+            )
+
+
+class EstadoPoligono(EstadoFerramenta):
+    def clicar(self, ctrl, x, y, ctrl_pressionado=False):
+        ctrl.modelo.pontos_poligono.extend([x, y])
+        if len(ctrl.modelo.pontos_poligono) >= 4:
+            x1, y1 = ctrl.modelo.pontos_poligono[-4], ctrl.modelo.pontos_poligono[-3]
+            l = ctrl.visao.tela.create_line(
+                x1, y1, x, y,
+                fill=ctrl.modelo.cor_borda,
+                width=ctrl.modelo.tamanho
+            )
+            ctrl.modelo.linhas_guia.append(l)
+
+    def arrastar(self, ctrl, x, y, ctrl_pressionado=False):
+        pass
+
+    def fechar(self, ctrl, x, y):
+        if len(ctrl.modelo.pontos_poligono) >= 6:
+            for l in ctrl.modelo.linhas_guia:
+                ctrl.visao.tela.delete(l)
+            ctrl.modelo.linhas_guia.clear()
+
+            ctrl.visao.tela.create_polygon(
+                ctrl.modelo.pontos_poligono,
+                outline=ctrl.modelo.cor_borda,
+                fill=ctrl.modelo.cor_preenchimento,
+                width=ctrl.modelo.tamanho
+            )
+            ctrl.modelo.pontos_poligono.clear()
+
+
+class EstadoPoligonoRegular(EstadoFerramenta):
+    
+
+    def clicar(self, ctrl, x, y, ctrl_pressionado=False):
+        ctrl.modelo.inicio_x = x
+        ctrl.modelo.inicio_y = y
+
+    def arrastar(self, ctrl, x, y, ctrl_pressionado=False):
+        cx, cy = ctrl.modelo.inicio_x, ctrl.modelo.inicio_y
+        raio = math.hypot(x - cx, y - cy)
+        if raio < 1:
+            return
+
+        try:
+            lados = max(3, int(ctrl.visao.spin_lados.get()))
+        except (ValueError, tk.TclError):
+            lados = 5
+
+        pontos = []
+        for i in range(lados):
+            angulo = -math.pi / 2 + (2 * math.pi * i / lados)
+            px = cx + raio * math.cos(angulo)
+            py = cy + raio * math.sin(angulo)
+            pontos.extend([px, py])
+
+        if ctrl.modelo.objeto:
+            ctrl.visao.tela.coords(ctrl.modelo.objeto, *pontos)
+        else:
+            ctrl.modelo.objeto = ctrl.visao.tela.create_polygon(
+                pontos,
+                outline=ctrl.modelo.cor_borda,
+                fill=ctrl.modelo.cor_preenchimento,
+                width=ctrl.modelo.tamanho
+            )
+
+
+class EstadoDistancia(EstadoFerramenta):
+
+    def clicar(self, ctrl, x, y, ctrl_pressionado=False):
+        itens = ctrl.visao.tela.find_closest(x, y)
+
+        if not itens:
+            return
+
+        item = itens[0]
+
+        if ctrl.visao.tela.type(item) != "line":
+            messagebox.showwarning(
+                "Aviso",
+                "Selecione uma linha."
+            )
+            return
+
+        coords = ctrl.visao.tela.coords(item)
+
+        if len(coords) != 4:
+            messagebox.showwarning(
+                "Aviso",
+                "O objeto deve ser um segmento de reta."
+            )
+            return
+
+        x1, y1, x2, y2 = coords
+
+        d = distancia(x1, y1, x2, y2, x, y)
+
+        messagebox.showinfo(
+            "Distância",
+            f"Distância = {d:.2f} pixels"
+        )
+
+    def arrastar(self, ctrl, x, y, ctrl_pressionado=False):
+        pass
